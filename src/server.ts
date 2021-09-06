@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
+import { deleteLocalFiles, filterImageFromURL } from './util/util';
 
 (async () => {
   // setup server and external middleware
@@ -7,23 +8,28 @@ import bodyParser from 'body-parser';
   const PORT = process.env.PORT || 8082;
   app.use(bodyParser.json());
 
-  // @TODO1 IMPLEMENT A RESTFUL ENDPOINT
-  // GET /filteredimage?image_url={{URL}}
-  // endpoint to filter an image from a public url.
-  // IT SHOULD
-  //    1
-  //    1. validate the image_url query
-  //    2. call filterImageFromURL(image_url) to filter the image
-  //    3. send the resulting file in the response
-  //    4. deletes any files on the server on finish of the response
-  // QUERY PARAMETERS
-  //    image_url: URL of a publicly accessible image
-  // RETURNS
-  //   the filtered image file [!!TIP res.sendFile(filteredpath); might be useful]
+  app.get('/filteredimage', async (request: Request, response: Response) => {
+    const { image_url: imageUrl } = request.query;
 
-  /** ************************************************************************** */
+    if (!imageUrl) {
+      return response.status(400).send({ message: 'image_url required' });
+    }
 
-  //! END @TODO1
+    if (typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+      return response.status(400).send({ message: 'image_url is malformed' });
+    }
+
+    try {
+      console.log('called');
+      const filteredPath = await filterImageFromURL(imageUrl);
+      return response.status(200).sendFile(filteredPath, async () => {
+        await deleteLocalFiles([filteredPath]);
+      });
+    } catch (error) {
+      console.error(error);
+      return response.status(500).send({ message: 'ups! something wrong with our server' });
+    }
+  });
 
   // Root Endpoint
   // Displays a simple message to the user
