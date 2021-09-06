@@ -12,11 +12,11 @@ import { deleteLocalFiles, filterImageFromURL } from './util/util';
     const { image_url: imageUrl } = request.query;
 
     if (!imageUrl) {
-      return response.status(400).send({ message: 'image_url required' });
+      return response.status(422).send({ message: 'image_url required' });
     }
 
     if (typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
-      return response.status(400).send({ message: 'image_url is malformed' });
+      return response.status(422).send({ message: 'image_url is malformed' });
     }
 
     try {
